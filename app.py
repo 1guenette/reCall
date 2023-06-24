@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory, send_file
+from flask import Flask, jsonify, send_from_directory, send_file, request
 import freeclimb
 import os
 from freeclimb.api import default_api
@@ -38,10 +38,7 @@ cache = Cache(app)
 
 counter = 0
 
-def increment():
-    global counter
-    counter = counter + 1
-    print(counter)
+
 
 @app.route('/voice', methods=['GET', 'POST'])
 def api_endpoint(req):
@@ -52,19 +49,21 @@ def api_endpoint(req):
 @app.route('/start_call', methods=['GET', 'POST'])
 def start_call():
     print('Starting outgoing call campaign...')
-    make_outgoing_call()
+    make_outgoing_call( request.args.get('target'))
     data = {'message': 'Persistant sales pitch started'}
     return jsonify(data)
 
 
-def make_outgoing_call():
+def make_outgoing_call(target):
     try:
+        print("XXXXX")
+        print(target)
+
         url = FC_URL + '/Accounts/' + ACCOUNT_ID + '/Calls'
         data = {
             'applicationId': APP_ID,
-            'to': '+13128063546',
+            'to': '+' + target,
             'from': FC_NUMBER,
-            'timeout': 15,
             'callConnectUrl': SRC_URL + '/play_recording'
         }
         headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', "Pragma": "no-cache"}
@@ -77,7 +76,9 @@ def make_outgoing_call():
 
 @app.route('/callback', methods=['POST', 'GET'])
 def on_call_disconnect():
-    make_outgoing_call()
+    
+    time.sleep(2)
+    make_outgoing_call(request.json.get('to')[1:])
     print("Recalling possible customer")
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
 
@@ -88,19 +89,11 @@ def play_recording():
 
 @app.route('/happy_dude', methods=['POST', 'GET'])
 def happy_dude():
-    increment()
-    # if counter%2 == 0:
     response =  send_file('./recordings/happy_dude.wav',  as_attachment=False)
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
+    response.headers['Cache-Control'] = 'no-cache, no-store'
     response.headers['Expires'] = '0'
+    response.headers['Pragma'] = 'no-cache'
     return response
-    # else:
-    #     response = send_file('./recordings/happy_dude_2.wav',  as_attachment=False)
-    #     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    #     response.headers['Pragma'] = 'no-cache'
-    #     response.headers['Expires'] = '0'
-    #     return response
 
 if __name__ == '__main__':
     app.run(port=3001)
