@@ -1,0 +1,11 @@
+[
+    {
+      "OutDial": {
+        "destination": "+18475722071",
+        "callingNumber": "+17113334444",
+        "timeout": 40,
+        "callConnectUrl": "http://www.example.com/OutDialEstablished",
+        "actionUrl": "http://www.example.com/OutDialSpawned"
+      }
+    }
+]
